@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Indonesian Weather Vocabulary</title>
+  <style>
+    body { font-family: Arial; background:#f5f7fa; padding:20px; }
+    h1 { text-align:center; }
+    .mode-switch { text-align:center; margin-bottom:20px; }
+    button { padding:10px 15px; margin:5px; border:none; border-radius:8px; cursor:pointer; background:#4CAF50; color:white; }
+    .card-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; }
+    .card { background:white; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); text-align:center; cursor:pointer; }
+    .indonesian { font-size:20px; font-weight:bold; }
+    .english { margin-top:10px; display:none; }
+    .quiz-container { text-align:center; margin-top:30px; display:none; }
+    .options button { display:block; width:200px; margin:10px auto; background:#2196F3; }
+    .correct { background:#4CAF50 !important; }
+    .wrong { background:#f44336 !important; }
+    .next-btn { margin-top:20px; display:none; background:#333; }
+    .result { font-size:18px; margin-top:20px; text-align:left; }
+    .sentence { color:#555; font-size:14px; cursor:pointer; }
+    .translation { color:#888; font-size:13px; display:none; }
+  </style>
+</head>
+<body>
+
+<h1>🌤️ Weather Vocabulary</h1>
+
+<div class="mode-switch">
+  <button onclick="showCards()">📚 Flashcards</button>
+  <button onclick="startQuiz()">🧠 Quiz Mode</button>
+</div>
+
+<div class="card-container" id="cards"></div>
+
+<div class="quiz-container" id="quiz">
+  <div id="progress"></div>
+  <div class="question" id="question"></div>
+  <div class="options" id="options"></div>
+  <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next ➡️</button>
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+const vocabulary = [
+  { ind:"cuaca",eng:"weather",sen:"Cuaca hari ini sangat bagus.",trans:"The weather is very good today."},
+  { ind:"panas",eng:"hot",sen:"Hari ini sangat panas.",trans:"Today is very hot."},
+  { ind:"dingin",eng:"cold",sen:"Udara pagi ini dingin.",trans:"The air this morning is cold."},
+  { ind:"hangat",eng:"warm",sen:"Air ini hangat.",trans:"This water is warm."},
+  { ind:"sejuk",eng:"cool",sen:"Udara di gunung sangat sejuk.",trans:"The air in the mountains is very cool."},
+  { ind:"hujan",eng:"rain",sen:"Sekarang sedang hujan.",trans:"It is raining now."},
+  { ind:"hujan deras",eng:"heavy rain",sen:"Tadi malam hujan deras.",trans:"It rained heavily last night."},
+  { ind:"gerimis",eng:"drizzle",sen:"Di luar sedang gerimis.",trans:"It is drizzling outside."},
+  { ind:"cerah",eng:"sunny",sen:"Hari ini sangat cerah.",trans:"Today is very sunny."},
+  { ind:"berawan",eng:"cloudy",sen:"Langit terlihat berawan.",trans:"The sky looks cloudy."},
+  { ind:"mendung",eng:"overcast",sen:"Cuaca mendung hari ini.",trans:"The weather is overcast today."},
+  { ind:"angin",eng:"wind",sen:"Angin bertiup kencang.",trans:"The wind is blowing strongly."},
+  { ind:"berangin",eng:"windy",sen:"Hari ini sangat berangin.",trans:"Today is very windy."},
+  { ind:"badai",eng:"storm",sen:"Badai besar datang.",trans:"A big storm is coming."},
+  { ind:"petir",eng:"lightning",sen:"Petir menyambar langit.",trans:"Lightning strikes the sky."},
+  { ind:"guntur",eng:"thunder",sen:"Saya mendengar suara guntur.",trans:"I hear thunder."},
+  { ind:"lembap",eng:"humid",sen:"Udara sangat lembap.",trans:"The air is very humid."},
+  { ind:"kering",eng:"dry",sen:"Musim ini sangat kering.",trans:"This season is very dry."},
+  { ind:"musim hujan",eng:"rainy season",sen:"Sekarang musim hujan.",trans:"It is the rainy season now."},
+  { ind:"musim kemarau",eng:"dry season",sen:"Musim kemarau sangat panas.",trans:"The dry season is very hot."}
+];
+
+let quizList = [];
+let currentIndex = 0;
+let wrongList = [];
+let currentCorrect = null;
+
+const cards = document.getElementById("cards");
+const quiz = document.getElementById("quiz");
+const nextBtn = document.getElementById("nextBtn");
+
+function speak(text){
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "id-ID";
+  speechSynthesis.speak(utterance);
+}
+
+function showCards(){ cards.style.display="grid"; quiz.style.display="none"; }
+
+vocabulary.forEach(w=>{
+  const c=document.createElement("div"); c.className="card";
+  const i=document.createElement("div"); i.className="indonesian"; i.textContent=w.ind;
+  const e=document.createElement("div"); e.className="english"; e.textContent=w.eng;
+  c.appendChild(i); c.appendChild(e);
+  c.onclick=()=> e.style.display=e.style.display==="none"?"block":"none";
+  cards.appendChild(c);
+});
+
+function startQuiz(){
+  cards.style.display="none";
+  quiz.style.display="block";
+  wrongList=[];
+  currentIndex=0;
+  document.getElementById("result").innerHTML="";
+  quizList=[...vocabulary].sort(()=>Math.random()-0.5).slice(0,10);
+  nextQuestion();
+}
+
+function nextQuestion(){
+  if(currentIndex>=quizList.length){
+    showResult();
+    return;
+  }
+
+  const q=quizList[currentIndex];
+  currentCorrect=q;
+  document.getElementById("progress").textContent=`Question ${currentIndex+1}/10`;
+  document.getElementById("question").textContent=`"${q.ind}" means?`;
+
+  const optionsEl=document.getElementById("options");
+  optionsEl.innerHTML="";
+  nextBtn.style.display="none";
+
+  let opts=[q.eng];
+  while(opts.length<4){
+    let r=vocabulary[Math.floor(Math.random()*vocabulary.length)].eng;
+    if(!opts.includes(r)) opts.push(r);
+  }
+  opts.sort(()=>Math.random()-0.5);
+
+  opts.forEach(opt=>{
+    const b=document.createElement("button"); b.textContent=opt;
+    b.onclick=()=>handleAnswer(b,opt);
+    optionsEl.appendChild(b);
+  });
+}
+
+function handleAnswer(btn,opt){
+  const buttons=document.querySelectorAll(".options button");
+  buttons.forEach(b=>b.disabled=true);
+
+  if(opt===currentCorrect.eng){
+    btn.classList.add("correct");
+  }else{
+    btn.classList.add("wrong");
+    wrongList.push(currentCorrect);
+    buttons.forEach(b=>{
+      if(b.textContent===currentCorrect.eng){ b.classList.add("correct"); }
+    });
+  }
+
+  currentIndex++;
+  nextBtn.style.display="inline-block";
+}
+
+function showResult(){
+  const result=document.getElementById("result");
+  const score=10-wrongList.length;
+
+  if(wrongList.length===0){
+    result.innerHTML=`🎉 Perfect! Score: ${score}/10`;
+  }else{
+    result.innerHTML=`Score: ${score}/10<br><br><b>Review wrong words:</b><br><br>` +
+      wrongList.map((w,idx)=>`
+        <div>
+          ${w.ind} = ${w.eng}<br>
+          <span class="sentence" onclick="toggleSentence(${idx})">${w.sen}</span>
+          <div class="translation" id="trans-${idx}">${w.trans}</div>
+        </div>
+      `).join("<br>");
+  }
+
+  document.getElementById("options").innerHTML="";
+  document.getElementById("question").textContent="Quiz Finished";
+  nextBtn.style.display="none";
+}
+
+function toggleSentence(index){
+  const el = document.getElementById(`trans-${index}`);
+  const sentence = el.previousElementSibling.textContent;
+
+  el.style.display = el.style.display === "none" ? "block" : "none";
+  speak(sentence);
+}
+</script>
+
+</body>
+</html>

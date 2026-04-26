@@ -1,86 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#4CAF50">
+<link rel="manifest" href="manifest.json">
+<title>Learn Indonesian App</title>
+<style>
+body { font-family: Arial; margin:0; background:#f5f7fa; }
+header { background:#4CAF50; color:white; text-align:center; padding:15px; }
+.container { padding:15px; }
 
-  <!-- PWA Meta -->
-  <meta name="theme-color" content="#4CAF50">
-  <link rel="manifest" href="manifest.json">
+/* Home (category page) */
+.home { display:block; }
+.category-card {
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  margin-bottom:10px;
+  text-align:center;
+  font-size:18px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
 
-  <title>Learn Indonesian App</title>
+/* Learning page */
+.app { display:none; }
+.card-container { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.card { background:white; padding:20px; border-radius:12px; text-align:center; }
+.english { display:none; margin-top:8px; }
 
-  <style>
-    body { font-family: Arial; margin:0; background:#f5f7fa; }
+.options button { width:100%; margin:8px 0; padding:12px; border:none; border-radius:10px; background:#2196F3; color:white; }
+.correct { background:#4CAF50 !important; }
+.wrong { background:#f44336 !important; }
+.next { width:100%; padding:12px; margin-top:10px; background:#333; color:white; border:none; border-radius:10px; display:none; }
+.review { display:none; }
+.translation { display:none; font-size:13px; }
 
-    header {
-      background:#4CAF50;
-      color:white;
-      text-align:center;
-      padding:15px;
-      font-size:20px;
-    }
+.tabbar { position:fixed; bottom:0; width:100%; display:flex; background:white; border-top:1px solid #ddd; }
+.tabbar button { flex:1; padding:12px; border:none; }
 
-    .container { padding:15px; }
-
-    .tabbar {
-      position:fixed;
-      bottom:0;
-      width:100%;
-      display:flex;
-      background:white;
-      border-top:1px solid #ddd;
-    }
-
-    .tabbar button {
-      flex:1;
-      padding:12px;
-      border:none;
-      background:white;
-      font-size:14px;
-    }
-
-    .active { color:#4CAF50; font-weight:bold; }
-
-    .card-container {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-
-    .card {
-      background:white;
-      padding:20px;
-      border-radius:12px;
-      text-align:center;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1);
-    }
-
-    .english { display:none; margin-top:8px; color:#555; }
-
-    .quiz { display:none; }
-
-    .options button {
-      width:100%;
-      margin:8px 0;
-      padding:12px;
-      border:none;
-      border-radius:10px;
-      background:#2196F3;
-      color:white;
-    }
-
-    .correct { background:#4CAF50 !important; }
-    .wrong { background:#f44336 !important; }
-
-    .next { width:100%; padding:12px; margin-top:10px; background:#333; color:white; border:none; border-radius:10px; display:none; }
-
-    .review { display:none; }
-    .sentence { display:block; margin-top:5px; color:#555; }
-    .translation { display:none; font-size:13px; color:#888; }
-
-    footer { height:60px; }
-  </style>
+.back-btn { margin-bottom:10px; }
+</style>
 </head>
 <body>
 
@@ -88,111 +48,204 @@
 
 <div class="container">
 
+<!-- 🔹 主題選擇頁 -->
+<div id="home" class="home">
+  <div class="category-card" onclick="enterCategory('weather')">🌤️ Weather</div>
+  <div class="category-card" onclick="enterCategory('food')">🍽️ Food</div>
+</div>
+
+<!-- 🔹 學習頁 -->
+<div id="app" class="app">
+  <button class="back-btn" onclick="goHome()">⬅ Back</button>
+
   <div id="cards" class="card-container"></div>
 
-  <div id="quiz" class="quiz">
+  <div id="quiz">
     <div id="qtext"></div>
-    <div class="options" id="options"></div>
-    <button class="next" id="nextBtn" onclick="nextQ()">Next</button>
+    <div id="options"></div>
+    <button id="nextBtn" class="next" onclick="nextQ()">Next</button>
   </div>
 
   <div id="review" class="review"></div>
+</div>
 
 </div>
 
-<footer></footer>
-
-<div class="tabbar">
-  <button onclick="showTab('cards')" id="tab1" class="active">📚</button>
-  <button onclick="startQuiz()" id="tab2">🧠</button>
-  <button onclick="showTab('review')" id="tab3">🔁</button>
+<div class="tabbar" id="tabbar" style="display:none;">
+  <button onclick="showTab('cards')">📚</button>
+  <button onclick="startQuiz()">🧠</button>
+  <button onclick="showTab('review')">🔁</button>
 </div>
 
 <script>
-const vocab=[
-{ind:"cuaca",eng:"weather",sen:"Cuaca hari ini sangat bagus.",trans:"The weather is very good today."},
-{ind:"panas",eng:"hot",sen:"Hari ini sangat panas.",trans:"Today is very hot."},
-{ind:"dingin",eng:"cold",sen:"Udara pagi ini dingin.",trans:"Morning air is cold."},
-{ind:"hangat",eng:"warm",sen:"Air ini hangat.",trans:"This water is warm."},
-{ind:"sejuk",eng:"cool",sen:"Udara di gunung sangat sejuk.",trans:"The air in the mountains is very cool."},
-{ind:"hujan",eng:"rain",sen:"Sekarang hujan.",trans:"It is raining."},
-{ind:"hujan deras",eng:"heavy rain",sen:"Tadi malam hujan deras.",trans:"It rained heavily last night."},
-{ind:"gerimis",eng:"drizzle",sen:"Di luar sedang gerimis.",trans:"It is drizzling outside."},
-{ind:"cerah",eng:"sunny",sen:"Hari ini cerah.",trans:"It is sunny."},
-{ind:"berawan",eng:"cloudy",sen:"Langit terlihat berawan.",trans:"The sky looks cloudy."},
-{ind:"mendung",eng:"overcast",sen:"Cuaca mendung hari ini.",trans:"The weather is overcast."},
-{ind:"angin",eng:"wind",sen:"Angin bertiup kencang.",trans:"The wind is strong."},
-{ind:"berangin",eng:"windy",sen:"Hari ini berangin.",trans:"It is windy."},
-{ind:"badai",eng:"storm",sen:"Badai datang.",trans:"A storm is coming."},
-{ind:"petir",eng:"lightning",sen:"Petir menyambar.",trans:"Lightning strikes."},
-{ind:"guntur",eng:"thunder",sen:"Saya dengar guntur.",trans:"I hear thunder."},
-{ind:"lembap",eng:"humid",sen:"Udara lembap.",trans:"The air is humid."},
-{ind:"kering",eng:"dry",sen:"Musim kering.",trans:"Dry season."},
-{ind:"musim hujan",eng:"rainy season",sen:"Sekarang musim hujan.",trans:"It is rainy season."},
-{ind:"musim kemarau",eng:"dry season",sen:"Musim kemarau panas.",trans:"Dry season is hot."}
-];
 
-let list=[],i=0,wrong=[],current;
+const data={
+ weather: [
+  {ind:"cuaca",eng:"weather",sen:"Cuaca hari ini bagus.",trans:"The weather is good today."},
+  {ind:"panas",eng:"hot",sen:"Hari ini sangat panas.",trans:"Today is very hot."},
+  {ind:"dingin",eng:"cold",sen:"Udara pagi ini dingin.",trans:"The morning air is cold."},
+  {ind:"hangat",eng:"warm",sen:"Air ini hangat.",trans:"This water is warm."},
+  {ind:"sejuk",eng:"cool",sen:"Udara di sini sejuk.",trans:"The air here is cool."},
+  {ind:"hujan",eng:"rain",sen:"Sekarang hujan.",trans:"It is raining now."},
+  {ind:"hujan deras",eng:"heavy rain",sen:"Tadi malam hujan deras.",trans:"It rained heavily last night."},
+  {ind:"gerimis",eng:"drizzle",sen:"Di luar sedang gerimis.",trans:"It is drizzling outside."},
+  {ind:"cerah",eng:"sunny",sen:"Hari ini cerah.",trans:"Today is sunny."},
+  {ind:"berawan",eng:"cloudy",sen:"Langit terlihat berawan.",trans:"The sky looks cloudy."},
+  {ind:"mendung",eng:"overcast",sen:"Cuaca hari ini mendung.",trans:"The weather is overcast today."},
+  {ind:"angin",eng:"wind",sen:"Angin bertiup kencang.",trans:"The wind is blowing strongly."},
+  {ind:"berangin",eng:"windy",sen:"Hari ini sangat berangin.",trans:"Today is very windy."},
+  {ind:"badai",eng:"storm",sen:"Badai akan datang.",trans:"A storm is coming."},
+  {ind:"petir",eng:"lightning",sen:"Petir menyambar.",trans:"Lightning strikes."},
+  {ind:"guntur",eng:"thunder",sen:"Saya mendengar guntur.",trans:"I hear thunder."},
+  {ind:"lembap",eng:"humid",sen:"Udara sangat lembap.",trans:"The air is very humid."},
+  {ind:"kering",eng:"dry",sen:"Musim ini sangat kering.",trans:"This season is very dry."},
+  {ind:"musim hujan",eng:"rainy season",sen:"Sekarang musim hujan.",trans:"It is the rainy season."},
+  {ind:"musim kemarau",eng:"dry season",sen:"Musim kemarau panas.",trans:"The dry season is hot."}
+],
+ food: [
+  {ind:"makan",eng:"eat",sen:"Saya mau makan.",trans:"I want to eat."},
+  {ind:"minum",eng:"drink",sen:"Saya mau minum.",trans:"I want to drink."},
+  {ind:"menu",eng:"menu",sen:"Boleh lihat menu?",trans:"Can I see the menu?"},
+  {ind:"air",eng:"water",sen:"Saya pesan air.",trans:"I order water."},
+  {ind:"teh",eng:"tea",sen:"Saya minum teh.",trans:"I drink tea."},
+  {ind:"kopi",eng:"coffee",sen:"Saya suka kopi.",trans:"I like coffee."},
+  {ind:"nasi",eng:"rice",sen:"Saya makan nasi.",trans:"I eat rice."},
+  {ind:"nasi goreng",eng:"fried rice",sen:"Saya pesan nasi goreng.",trans:"I order fried rice."},
+  {ind:"mie",eng:"noodles",sen:"Saya makan mie.",trans:"I eat noodles."},
+  {ind:"ayam",eng:"chicken",sen:"Ayam ini enak.",trans:"This chicken is delicious."},
+  {ind:"daging",eng:"meat",sen:"Saya makan daging.",trans:"I eat meat."},
+  {ind:"ikan",eng:"fish",sen:"Saya pesan ikan.",trans:"I order fish."},
+  {ind:"sayur",eng:"vegetable",sen:"Saya makan sayur.",trans:"I eat vegetables."},
+  {ind:"pedas",eng:"spicy",sen:"Makanan ini pedas.",trans:"This food is spicy."},
+  {ind:"manis",eng:"sweet",sen:"Minuman ini manis.",trans:"This drink is sweet."},
+  {ind:"asin",eng:"salty",sen:"Makanan ini asin.",trans:"This food is salty."},
+  {ind:"enak",eng:"delicious",sen:"Makanan ini enak.",trans:"This food is delicious."},
+  {ind:"pesan",eng:"order",sen:"Saya pesan makanan.",trans:"I order food."},
+  {ind:"bayar",eng:"pay",sen:"Saya mau bayar.",trans:"I want to pay."},
+  {ind:"tagihan",eng:"bill",sen:"Minta tagihan.",trans:"Ask for the bill."}
+]
+};
 
-const cards=document.getElementById('cards');
+let progress = JSON.parse(localStorage.getItem('progress')) || {
+ weather:{wrong:[]},
+ food:{wrong:[]}
+};
 
-vocab.forEach(w=>{
- let c=document.createElement('div');c.className='card';
- let i1=document.createElement('div');i1.textContent=w.ind;
- let e=document.createElement('div');e.className='english';e.textContent=w.eng;
- c.appendChild(i1);c.appendChild(e);
- c.onclick=()=>e.style.display=e.style.display==='none'?'block':'none';
- cards.appendChild(c);
-});
+let currentCategory=null;
+let vocab=[];
+let list=[],i=0,current;
+
+function saveProgress(){
+ localStorage.setItem('progress', JSON.stringify(progress));
+}
+
+// 👉 進入主題
+function enterCategory(cat){
+ currentCategory=cat;
+ vocab=data[cat];
+
+ document.getElementById('home').style.display='none';
+ document.getElementById('app').style.display='block';
+ document.getElementById('tabbar').style.display='flex';
+
+ renderCards();
+ showTab('cards');
+}
+
+// 👉 回首頁
+function goHome(){
+ document.getElementById('home').style.display='block';
+ document.getElementById('app').style.display='none';
+ document.getElementById('tabbar').style.display='none';
+}
+
+function renderCards(){
+ const cards=document.getElementById('cards');
+ cards.innerHTML='';
+ vocab.forEach(w=>{
+  let c=document.createElement('div');c.className='card';
+  let i1=document.createElement('div');i1.textContent=w.ind;
+  let e=document.createElement('div');e.className='english';e.textContent=w.eng;
+  c.appendChild(i1);c.appendChild(e);
+  c.onclick=()=>e.style.display=e.style.display==='none'?'block':'none';
+  cards.appendChild(c);
+ });
+}
 
 function showTab(tab){
  document.getElementById('cards').style.display=tab==='cards'?'grid':'none';
- document.getElementById('quiz').style.display='none';
+ document.getElementById('quiz').style.display=tab==='quiz'?'block':'none';
  document.getElementById('review').style.display=tab==='review'?'block':'none';
+
+ if(tab==='review') showReview();
 }
 
 function startQuiz(){
  showTab('quiz');
- document.getElementById('quiz').style.display='block';
  list=[...vocab].sort(()=>Math.random()-0.5);
- i=0;wrong=[];
+ i=0;
  nextQ();
 }
 
 function nextQ(){
- if(i>=list.length){showReview();return;}
+ if(i>=list.length){ showReview(); return; }
+
  current=list[i];
  document.getElementById('qtext').textContent=current.ind;
+
  let opts=[current.eng];
- while(opts.length<3){let r=vocab[Math.floor(Math.random()*vocab.length)].eng;if(!opts.includes(r))opts.push(r);} 
+ while(opts.length<3){
+  let r=vocab[Math.floor(Math.random()*vocab.length)].eng;
+  if(!opts.includes(r)) opts.push(r);
+ }
  opts.sort(()=>Math.random()-0.5);
 
- let box=document.getElementById('options');box.innerHTML='';
+ const box=document.getElementById('options');
+ box.innerHTML='';
  document.getElementById('nextBtn').style.display='none';
 
  opts.forEach(o=>{
-  let b=document.createElement('button');b.textContent=o;
+  let b=document.createElement('button');
+  b.textContent=o;
   b.onclick=()=>{
-   document.querySelectorAll('.options button').forEach(x=>x.disabled=true);
-   if(o===current.eng){b.classList.add('correct');}
-   else{
+   document.querySelectorAll('#options button').forEach(x=>x.disabled=true);
+
+   if(o===current.eng){
+    b.classList.add('correct');
+   }else{
     b.classList.add('wrong');
-    wrong.push(current);
-    document.querySelectorAll('.options button').forEach(x=>{if(x.textContent===current.eng)x.classList.add('correct');});
+
+    if(!progress[currentCategory].wrong.some(w=>w.ind===current.ind)){
+      progress[currentCategory].wrong.push(current);
+      saveProgress();
+    }
+
+    document.querySelectorAll('#options button').forEach(x=>{
+      if(x.textContent===current.eng) x.classList.add('correct');
+    });
    }
-   i++;document.getElementById('nextBtn').style.display='block';
+
+   i++;
+   document.getElementById('nextBtn').style.display='block';
   };
   box.appendChild(b);
  });
 }
 
 function showReview(){
- showTab('review');
- let r=document.getElementById('review');
- r.innerHTML='Review:<br>' + wrong.map((w,idx)=>`
- ${w.ind}=${w.eng}<br>
- <span onclick="toggle(${idx})">${w.sen}</span>
- <div id="t${idx}" class="translation">${w.trans}</div>
+ const wrongList = progress[currentCategory].wrong;
+ const r=document.getElementById('review');
+
+ if(wrongList.length===0){
+  r.innerHTML='🎉 No mistakes!';
+  return;
+ }
+
+ r.innerHTML='<b>Review:</b><br>'+
+ wrongList.map((w,idx)=>`
+  ${w.ind}=${w.eng}<br>
+  <span onclick="toggle(${idx})">${w.sen}</span>
+  <div id="t${idx}" class="translation">${w.trans}</div>
  `).join('<br>');
 }
 
@@ -200,14 +253,12 @@ function toggle(i){
  let el=document.getElementById('t'+i);
  el.style.display=el.style.display==='none'?'block':'none';
  let u=new SpeechSynthesisUtterance(el.previousElementSibling.textContent);
- u.lang='id-ID';speechSynthesis.speak(u);
+ u.lang='id-ID';
+ speechSynthesis.speak(u);
 }
 
-// Register service worker
-if('serviceWorker' in navigator){
- navigator.serviceWorker.register('sw.js');
-}
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
+
 </script>
-
 </body>
 </html>
